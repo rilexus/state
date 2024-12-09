@@ -157,9 +157,34 @@ describe('key as path', () => {
 
     expect(funcFirst).toBeCalledTimes(1);
     expect(funcSecond).toBeCalledTimes(1);
-
-
   });
+
+  describe('get state', () => {
+    it('should return undefined if path has no value', function () {
+      const state = new State({first: {second: 1, forth: '', fifth: []}, third: null});
+      const value = state.getState('first.some');
+      const second = state.getState('first.second.some');
+      const forth = state.getState('first.forth.some');
+      const fifth = state.getState('first.fifth.some');
+
+      expect(value).toEqual(undefined);
+      expect(second).toEqual(undefined);
+      expect(forth).toEqual(undefined);
+      expect(fifth).toEqual(undefined);
+    });
+
+    it('should return value by path', function () {
+      const state = new State({first: {second: 1, third: { fifth: 1 }}});
+      const second = state.getState('first.second');
+      const third = state.getState('first.third');
+      const fifth = state.getState('first.third.fifth');
+
+      expect(second).toEqual(1);
+      expect(third).toEqual({fifth: 1});
+      expect(fifth).toEqual(1);
+    });
+
+  })
 
 });
 

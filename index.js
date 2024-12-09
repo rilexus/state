@@ -40,12 +40,20 @@ class State {
 
   _getValue(path, state) {
     const keyPath = path.split(".");
-    return keyPath.reduce((state, key) => state[key], state);
+    let value = state
+
+    for (let i = 0; i < keyPath.length; ++i) {
+      const key = keyPath[i];
+      if(value === null || value === undefined || Array.isArray(value)) {
+        return undefined;
+      }
+      value = value[key];
+    }
+    return value;
   }
 
   getValue(path) {
-    const keyPath = path.split(".");
-    return keyPath.reduce((state, key) => state[key], this.getState());
+    return this._getValue(path, this.getSnapshot());
   }
 
   /*
@@ -110,7 +118,10 @@ class State {
     return JSON.parse(JSON.stringify(this.state));
   }
 
-  getState() {
+  getState(path) {
+    if (path) {
+      return this.getValue(path);
+    }
     return this.getSnapshot();
   }
 
@@ -147,5 +158,13 @@ class State {
     this.notify(newState, oldState);
   }
 }
+
+
+
+
+
+
+
+
 
 export default State;
