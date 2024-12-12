@@ -19,6 +19,12 @@ class State {
     this.setValue = this.setValue.bind(this);
     this.getValue = this.getValue.bind(this);
 
+    this.set = this.set.bind(this);
+    this.get = this.get.bind(this);
+    this._set = this._set.bind(this);
+    this.on = this.on.bind(this);
+    this.off = this.off.bind(this);
+
     this._getValue = this._getValue.bind(this);
 
     this.subscribe = this.subscribe.bind(this);
@@ -62,18 +68,18 @@ class State {
    * @param {any} value
    * @param {object} state
    * */
-  set(keys, value, obj) {
+  _set(keys, value, obj) {
     const [key, ...keyRest] = keys;
     const hasMoreKeys = keyRest.length > 0;
 
     if (hasMoreKeys) {
       // is a value
       if (!isObject(obj[key])) {
-        return { ...obj, [key]: this.set(keyRest, value, {}) };
+        return { ...obj, [key]: this._set(keyRest, value, {}) };
       }
 
       if (isObject(obj[key])) {
-        return { ...obj, [key]: this.set(keyRest, value, obj[key]) };
+        return { ...obj, [key]: this._set(keyRest, value, obj[key]) };
       }
     }
 
@@ -83,12 +89,26 @@ class State {
     }
   }
 
+  set(pathOrValue, value) {
+    return this.setState(pathOrValue, value);
+  }
+
+  /*
+   * @param {string | undefined} path
+   * */
+  get(path) {
+    if (typeof path === "string") {
+      return this.getValue(path)
+    }
+    return this.getState();
+  }
+
   /*
    * @param {string} path
    * @param {any} value
    * */
   setValue(path, value) {
-    return this.set(path.split("."), value, this.getState());
+    return this._set(path.split("."), value, this.getState());
   }
 
   subscribeTo(path, handler) {
@@ -97,6 +117,14 @@ class State {
     } else {
       this.toHandlers[path] = [handler];
     }
+  }
+
+  on(path, handler) {
+    this.subscribeTo(path, handler);
+  }
+
+  off(path, handler) {
+    this.unsubscribeFrom(path, handler);
   }
 
   unsubscribeFrom(path, handler) {
@@ -110,8 +138,13 @@ class State {
     }
   }
 
-  unsubscribe(handler) {
-    this.handlers = this.handlers.filter((h) => h !== handler);
+  unsubscribe(handlerOrPath, handler) {
+    if (typeof handlerOrPath === "string") {
+      return this.unsubscribeFrom(handlerOrPath, handler)
+    }
+    if (typeof handlerOrPath === "function") {
+      this.handlers = this.handlers.filter((h) => h !== handlerOrPath);
+    }
   }
 
   getSnapshot() {
@@ -119,7 +152,7 @@ class State {
   }
 
   getState(path) {
-    if (path) {
+    if (typeof path === "string") {
       return this.getValue(path);
     }
     return this.getSnapshot();

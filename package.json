@@ -1,7 +1,7 @@
 {
-  "name": "state",
-  "description": "Let you to subscribe to state changes.",
-  "version": "1.0.0",
+  "name": "statefull",
+  "description": "Subscribe to state changes.",
+  "version": "1.0.1",
   "homepage": "https://github.com/rilexus/state",
   "author": "Stanislav Panchenko (https://github.com/rilexus)",
   "contributors": [
@@ -39,7 +39,8 @@
   },
   "keywords": [
     "state",
-    "subscribe"
+    "subscribe",
+    "statefull"
   ],
   "verb": {
     "toc": false,

@@ -44,6 +44,15 @@ describe('simple key', () => {
 
 });
 
+describe('get state', () => {
+  it('should set and get', function () {
+    const state = new State({});
+    state.set('first.second', 1);
+
+    expect(state.get('first.second') === 1);
+  });
+})
+
 describe('key as path', () => {
   it("should set value with path", function () {
     const state = new State({});
@@ -147,6 +156,7 @@ describe('key as path', () => {
     state.setState( 'second', 2);
     expect(funcSecond).toBeCalledTimes(1);
     expect(funcSecond).toBeCalledWith(2);
+
     expect(funcFirst).toBeCalledTimes(1);
 
 
