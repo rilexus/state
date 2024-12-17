@@ -36,6 +36,11 @@ var State = /*#__PURE__*/function () {
     this.getState = this.getState.bind(this);
     this.setValue = this.setValue.bind(this);
     this.getValue = this.getValue.bind(this);
+    this.set = this.set.bind(this);
+    this.get = this.get.bind(this);
+    this._set = this._set.bind(this);
+    this.on = this.on.bind(this);
+    this.off = this.off.bind(this);
     this._getValue = this._getValue.bind(this);
     this.subscribe = this.subscribe.bind(this);
     this.subscribeTo = this.subscribeTo.bind(this);
@@ -56,17 +61,20 @@ var State = /*#__PURE__*/function () {
     key: "_getValue",
     value: function _getValue(path, state) {
       var keyPath = path.split(".");
-      return keyPath.reduce(function (state, key) {
-        return state[key];
-      }, state);
+      var value = state;
+      for (var i = 0; i < keyPath.length; ++i) {
+        var key = keyPath[i];
+        if (value === null || value === undefined || Array.isArray(value)) {
+          return undefined;
+        }
+        value = value[key];
+      }
+      return value;
     }
   }, {
     key: "getValue",
     value: function getValue(path) {
-      var keyPath = path.split(".");
-      return keyPath.reduce(function (state, key) {
-        return state[key];
-      }, this.getState());
+      return this._getValue(path, this.getSnapshot());
     }
 
     /*
@@ -76,8 +84,8 @@ var State = /*#__PURE__*/function () {
      * @param {object} state
      * */
   }, {
-    key: "set",
-    value: function set(keys, value, obj) {
+    key: "_set",
+    value: function _set(keys, value, obj) {
       var _keys = _toArray(keys),
         key = _keys[0],
         keyRest = _keys.slice(1);
@@ -85,16 +93,33 @@ var State = /*#__PURE__*/function () {
       if (hasMoreKeys) {
         // is a value
         if (!isObject(obj[key])) {
-          return _objectSpread(_objectSpread({}, obj), {}, _defineProperty({}, key, this.set(keyRest, value, {})));
+          return _objectSpread(_objectSpread({}, obj), {}, _defineProperty({}, key, this._set(keyRest, value, {})));
         }
         if (isObject(obj[key])) {
-          return _objectSpread(_objectSpread({}, obj), {}, _defineProperty({}, key, this.set(keyRest, value, obj[key])));
+          return _objectSpread(_objectSpread({}, obj), {}, _defineProperty({}, key, this._set(keyRest, value, obj[key])));
         }
       }
       if (!hasMoreKeys) {
         obj[key] = value;
         return obj;
       }
+    }
+  }, {
+    key: "set",
+    value: function set(pathOrValue, value) {
+      return this.setState(pathOrValue, value);
+    }
+
+    /*
+     * @param {string | undefined} path
+     * */
+  }, {
+    key: "get",
+    value: function get(path) {
+      if (typeof path === "string") {
+        return this.getValue(path);
+      }
+      return this.getState();
     }
 
     /*
@@ -104,35 +129,50 @@ var State = /*#__PURE__*/function () {
   }, {
     key: "setValue",
     value: function setValue(path, value) {
-      return this.set(path.split("."), value, this.getState());
+      return this._set(path.split("."), value, this.getState());
     }
   }, {
     key: "subscribeTo",
     value: function subscribeTo(path, handler) {
       if (path in this.toHandlers) {
         this.toHandlers[path].push(handler);
-        return;
+      } else {
+        this.toHandlers[path] = [handler];
       }
-      this.toHandlers[path] = [handler];
+    }
+  }, {
+    key: "on",
+    value: function on(path, handler) {
+      this.subscribeTo(path, handler);
+    }
+  }, {
+    key: "off",
+    value: function off(path, handler) {
+      this.unsubscribeFrom(path, handler);
     }
   }, {
     key: "unsubscribeFrom",
     value: function unsubscribeFrom(path, handler) {
       if (path in this.toHandlers) {
-        this.toHandlers.handlers = this.toHandlers.handlers.filter(function (h) {
+        this.toHandlers[path] = this.toHandlers[path].filter(function (h) {
           return h !== handler;
         });
-        if (this.toHandlers.length === 0) {
+        if (this.toHandlers[path].length === 0) {
           delete this.toHandlers[path];
         }
       }
     }
   }, {
     key: "unsubscribe",
-    value: function unsubscribe(handler) {
-      this.handlers = this.handlers.filter(function (h) {
-        return h !== handler;
-      });
+    value: function unsubscribe(handlerOrPath, handler) {
+      if (typeof handlerOrPath === "string") {
+        return this.unsubscribeFrom(handlerOrPath, handler);
+      }
+      if (typeof handlerOrPath === "function") {
+        this.handlers = this.handlers.filter(function (h) {
+          return h !== handlerOrPath;
+        });
+      }
     }
   }, {
     key: "getSnapshot",
@@ -141,7 +181,10 @@ var State = /*#__PURE__*/function () {
     }
   }, {
     key: "getState",
-    value: function getState() {
+    value: function getState(path) {
+      if (typeof path === "string") {
+        return this.getValue(path);
+      }
       return this.getSnapshot();
     }
   }, {
@@ -162,7 +205,7 @@ var State = /*#__PURE__*/function () {
         var newValue = _this._getValue(path, newState);
         if (newValue !== oldValue) {
           handlers.forEach(function (h) {
-            return h(newValue);
+            return h(newValue, newState);
           });
         }
       });

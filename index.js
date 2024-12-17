@@ -171,7 +171,7 @@ class State {
       const newValue = this._getValue(path, newState);
 
       if (newValue !== oldValue) {
-        handlers.forEach((h) => h(newValue));
+        handlers.forEach((h) => h(newValue, newState));
       }
     });
   }

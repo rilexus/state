@@ -149,13 +149,14 @@ describe('key as path', () => {
 
     state.setState( 'first', 2);
     expect(funcFirst).toBeCalledTimes(1);
-    expect(funcFirst).toBeCalledWith(2);
+    expect(funcFirst).toBeCalledWith(2, { first:2, second: 1 });
+
     expect(funcSecond).toBeCalledTimes(0);
 
 
     state.setState( 'second', 2);
     expect(funcSecond).toBeCalledTimes(1);
-    expect(funcSecond).toBeCalledWith(2);
+    expect(funcSecond).toBeCalledWith(2, { first: 2, second: 2 });
 
     expect(funcFirst).toBeCalledTimes(1);
 
